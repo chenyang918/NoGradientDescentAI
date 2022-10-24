@@ -1,0 +1,61 @@
+from sympy import Symbol, solve
+import numpy as np
+
+
+def new_weight(row_dim, col_dim):
+    weight = []
+    for i in range(row_dim):
+        col_weight = []
+        for j in range(col_dim):
+            col_weight.append(Symbol('x{}{}'.format(i, j)))
+        weight.append(col_weight)
+    return weight
+
+
+def get_weight(input_data, output_data, weight):
+    weight_list = []
+    weight = np.array(weight)
+    for j, one_weight in enumerate(weight.transpose([1, 0])):
+        f_list = []
+        for i, d in enumerate(input_data):
+            f = np.sum(one_weight * np.array(d)) - output_data[i][j]
+            f_list.append(f)
+        res_weight = solve(f_list, one_weight.tolist())
+        weight_list.append(list(res_weight.values()))
+    return np.array(weight_list).astype("float").transpose([1, 0])
+def get_linner(input_data, output_data):
+    weight_list = []
+    row_dim=len(input_data[-1])
+    for j,o,in enumerate(np.array(output_data).transpose([1,0])):
+        f_list = []
+        one_weight = [Symbol('x{}{}'.format(k, j)) for k in range(row_dim)]
+        for i, d in enumerate(input_data):
+            f = np.sum(np.array(one_weight) * np.array(d)) - o[i]
+            f_list.append(f)
+        res_weight = solve(f_list, one_weight)
+        weight_list.append(list(res_weight.values()))
+    return np.array(weight_list).astype("float").transpose([1, 0])
+
+def get_mati_rows(input_data,new_dim):
+    one_rows=np.arange(new_dim)+1
+    one_rows=one_rows/one_rows.sum()
+    row=len(input_data[-1])
+    m_rows=np.zeros([row,1])+one_rows
+    new_input_data=np.array(input_data)@m_rows
+    return new_input_data
+
+
+if __name__ == '__main__':
+    # weight = new_weight(2, 4)
+    # 权重有2行 所以只需两数据方可解方程得到 所有权重参数
+    input_data = [[3, 6], [5, 9]]
+    output_data = [[7, 9, 12, 14], [14, 18, 24, 28]]
+    # 使用的时候一定要注意 新的维度 数据要对应上不能使用 10个维度 了数据只有两个
+    # input_data=get_mati_rows(input_data,10).tolist()
+
+    # 求解weight
+    # weight_data = get_weight(input_data, output_data, weight)
+    # 合并代码 统一计算 且不需要定义输出输出维度 但是输入维度要一致  输出维度要一致
+    weight_data=get_linner(input_data,output_data)
+    # 结果验证
+    print(np.array(input_data) @ weight_data)
